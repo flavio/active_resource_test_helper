@@ -1,6 +1,9 @@
 require 'ohm'
 
+# Adds a new type of factory to factory_girl[http://github.com/thoughtbot/factory_girl].
 class Factory
+  # Define a new factory to use inside of ActiveRecord tests.
+  # Uses the same syntax of factory_girl[http://github.com/thoughtbot/factory_girl].
   def self.define_active_resource_factory name, options = {}, &definition
     raise "no block given" unless block_given?
 

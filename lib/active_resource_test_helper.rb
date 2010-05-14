@@ -2,7 +2,7 @@ require 'active_resource_test_helper/ohm/model'
 require 'active_resource_test_helper/active_resource/http_mock'
 require 'active_resource_test_helper/factory'
 
-module ActiveResourceTestHelper
+module ActiveResourceTestHelper  #:nodoc: all
   def self.included(base)
     base.extend ClassMethods
   end
