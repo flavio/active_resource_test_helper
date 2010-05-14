@@ -1,0 +1,146 @@
+= active_resource_test_helper
+
+active_resource_test_helper makes easier to use ActiveResouce::HttpMock[http://api.rubyonrails.org/classes/ActiveResource/HttpMock.html].
+
+Instead of declaring manually all the request-responses pairs it's possible to
+use dynamically generated contents. These contents are defined using
+factory_girl[http://github.com/thoughtbot/factory_girl] and are stored into a
+Redis[http://code.google.com/p/redis/] database using ohm[http://github.com/soveran/ohm].
+
+Usually ActiveResouce tests looks like that:
+
+  def setup
+    @matz  = { :id => 1, :name => "Matz" }.to_xml(:root => "person")
+    ActiveResource::HttpMock.respond_to do |mock|
+      mock.post   "/people.xml",   {}, @matz, 201, "Location" => "/people/1.xml"
+      mock.get    "/people/1.xml", {}, @matz
+      mock.put    "/people/1.xml", {}, nil, 204
+      mock.delete "/people/1.xml", {}, nil, 200
+    end
+  end
+
+  def test_get_matz
+    person = Person.find(1)
+    assert_equal "Matz", person.name
+  end
+
+While using active_resource_test_helper they would be something like that:
+
+  class RemoteUserTest < Test::Unit::TestCase
+    include ActiveResourceTestHelper
+    active_resource_factories :user
+
+    def setup
+      assert_equal 0, User.count
+      @users = []
+      20.times do |i|
+        @users << Factory.create(:basic_user)
+      end
+    end
+
+    def test_find_by_id
+      @users.each do |expected_user|
+        user = UserResource.find(expected_user.id)
+        assert_not_nil user
+        assert_equal expected_user.first_name, user.first_name
+      end
+    end
+  end
+
+== HTTP methods supported
+
+Currently active_resource_test_helper dynamic contents are served only by _get_ requests.
+In the future they will be used also by _post_, _put_, _delete_ and _head_ operations.
+
+=== Get requests
+
+Currently the following operations are fully supported:
+
+  Person.find(1)
+  Person.find(:all)
+  Person.find(:first)
+  Person.find(:last)
+  Person.find(:all, :params => { :title => "CEO" })
+  Person.find(:first, :params => { :first_name => "flavio", :last_name => "castelli" })
+
+== Requirements
+
+Install Redis[http://code.google.com/p/redis/]. On most platforms it's as easy as grabbing the sources, running make and then putting the redis-server binary in the PATH.
+
+Once you have it installed, you can execute redis-server and it will run on localhost:6379 by default. Check the redis.conf file that comes with the sources if you want to change some settings.
+
+Then install the active_resource_test_helper gem:
+
+  sudo gem install active_resource_test_helper
+
+== Usage
+
+In order to use active_resource_test_helper inside of your test you have to:
+
+* define the factories used by ActiveResource tests (see below)
+* require 'active_resource_test_helper'
+* include the ActiveResourceTestHelper module inside of your test
+
+This is a small example:
+
+  require  'active_resource_test_helper'
+
+  class MyTest < Test::Unit::TestCase
+    include ActiveResourceTestHelper
+    active_resource_factories :user, :post, :comment
+  end
+
+You can find more examples under the _test_ directory.
+
+== Defining factories
+
+Factories used by ActiveResource::HttpMock are defined using the _Factory.define_active_resource_factory_ method:
+
+  Factory.define_active_resource_factory(:basic_user, :class => "User") do |u|
+    u.sequence(:first_name) {|n| "first_name#{n}"}
+    u.sequence(:last_name) {|n| "last_name#{n}"}
+    u.admin false
+    u.email {|u| "#{u.first_name}.#{u.last_name}@example.com" }
+    u.age {rand(30) + 18}
+  end
+
+This methods uses the same syntax of factory_girl[http://github.com/thoughtbot/factory_girl].
+
+=== What happens behind the scenes
+
+_active_resource_test_helper_ will automatically generate an ohm[http://github.com/soveran/ohm]
+model for each build class used by the active resource factories.
+
+These models will have one attribute and one index per each attribute declared inside of the factory.
+
+The factory defined into the previous example will generate this model:
+
+  class User < Ohm::Model
+      index :id
+
+      attribute :first_name
+      index :first_name
+
+      attribute :last_name
+      index :last_name
+
+      attribute :admin
+      index :admin
+
+      attribute :email
+      index :email
+
+      attribute :age
+      index :age
+
+      alias :save! :save
+  end
+
+== Transactional factories
+
+Currently redis doesn't have a complete transaction support. Fortunately _active_resource_test_helper_ removes all the models defined by the ActiveResource factories used by the test from redis database. This operation is executed before and after each test execution.
+
+== Statically defined responses
+
+It's possible to use dynamic contents and static pairs of request-response at the same time.
+However the responses defined in the static way have precedence over the ones generated in the dynamic way.
