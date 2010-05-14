@@ -1,13 +1,13 @@
 = active_resource_test_helper
 
-active_resource_test_helper makes easier to use ActiveResouce::HttpMock[http://api.rubyonrails.org/classes/ActiveResource/HttpMock.html].
+active_resource_test_helper makes it easier to use ActiveResouce::HttpMock[http://api.rubyonrails.org/classes/ActiveResource/HttpMock.html].
 
-Instead of declaring manually all the request-responses pairs it's possible to
+Instead of declaring manually all the request-response pairs, it's possible to
 use dynamically generated contents. These contents are defined using
 factory_girl[http://github.com/thoughtbot/factory_girl] and are stored into a
 Redis[http://code.google.com/p/redis/] database using ohm[http://github.com/soveran/ohm].
 
-Usually ActiveResouce tests looks like that:
+Usually ActiveResource tests look like that:
 
   def setup
     @matz  = { :id => 1, :name => "Matz" }.to_xml(:root => "person")
@@ -24,7 +24,7 @@ Usually ActiveResouce tests looks like that:
     assert_equal "Matz", person.name
   end
 
-While using active_resource_test_helper they would be something like that:
+While using active_resource_test_helper an common ActiveResource test would be something like that:
 
   class RemoteUserTest < Test::Unit::TestCase
     include ActiveResourceTestHelper
@@ -54,7 +54,7 @@ In the future they will be used also by _post_, _put_, _delete_ and _head_ opera
 
 === Get requests
 
-Currently the following operations are fully supported:
+The following operations are currently fully supported:
 
   Person.find(1)
   Person.find(:all)
@@ -75,9 +75,8 @@ Then install the active_resource_test_helper gem:
 
 == Usage
 
-In order to use active_resource_test_helper inside of your test you have to:
+In order to use active_resource_test_helper inside of your tests you have to:
 
-* define the factories used by ActiveResource tests (see below)
 * require 'active_resource_test_helper'
 * include the ActiveResourceTestHelper module inside of your test
 
@@ -90,11 +89,13 @@ This is a small example:
     active_resource_factories :user, :post, :comment
   end
 
+Obviously you have also to define the factories used by your test (see below).
+
 You can find more examples under the _test_ directory.
 
 == Defining factories
 
-Factories used by ActiveResource::HttpMock are defined using the _Factory.define_active_resource_factory_ method:
+Factories used by ActiveResource::HttpMock are defined with the _Factory.define_active_resource_factory_ method:
 
   Factory.define_active_resource_factory(:basic_user, :class => "User") do |u|
     u.sequence(:first_name) {|n| "first_name#{n}"}
@@ -104,7 +105,7 @@ Factories used by ActiveResource::HttpMock are defined using the _Factory.define
     u.age {rand(30) + 18}
   end
 
-This methods uses the same syntax of factory_girl[http://github.com/thoughtbot/factory_girl].
+If you are already familiar with factory_girl[http://github.com/thoughtbot/factory_girl] you will probably have already noticed we are using the same syntax.
 
 === What happens behind the scenes
 
@@ -138,9 +139,10 @@ The factory defined into the previous example will generate this model:
 
 == Transactional factories
 
-Currently redis doesn't have a complete transaction support. Fortunately _active_resource_test_helper_ removes all the models defined by the ActiveResource factories used by the test from redis database. This operation is executed before and after each test execution.
+Currently redis doesn't have a complete transaction support. active_resource_test_helper removes from the redis database all the instances of the models defined by the ActiveResource factories that are used by the test.
+This operation is executed before and after each test execution.
 
 == Statically defined responses
 
 It's possible to use dynamic contents and static pairs of request-response at the same time.
-However the responses defined in the static way have precedence over the ones generated in the dynamic way.
+However the responses defined in the static way have precedence over those generated in the dynamic way.
