@@ -13,7 +13,7 @@ end
 
 class ActiveResourceTestHelperTest < Test::Unit::TestCase
   include ActiveResourceTestHelper
-  active_record_factories :basic_user
+  active_resource_factories :basic_user
 
   def setup
     # make sure the User table is empty at the beginning of the test

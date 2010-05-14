@@ -20,7 +20,7 @@ module ActiveResourceTestHelper
   end
 
   module ClassMethods
-    def active_record_factories *args
+    def active_resource_factories *args
       args.each do |name|
         ActiveResource::HttpMock.register_factory name
       end
